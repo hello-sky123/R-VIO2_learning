@@ -61,6 +61,7 @@ System::System(const std::string& strSettingsFile) {
 
   mnMaxSlamPoints = fsSettings["Tracker.nMaxSlamPoints"];
 
+  // Thresholds for moving detection [rad,m]
   mnAngleThrd = fsSettings["INI.nAngleThrd"];
   mnLengthThrd = fsSettings["INI.nLengthThrd"];
 
@@ -132,12 +133,13 @@ bool System::initialize(const ImageData& Image,
   Eigen::Vector3f vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f len = Eigen::Vector3f::Zero();
 
+  // 计算两帧图像之间的角度、速度和位移，判断是否在运动
   for (const ImuData& data: vImuData) {
     Eigen::Vector3f tempw = data.AngularVel;
     Eigen::Vector3f tempa = data.LinearAccel;
     double dt = data.TimeInterval;
 
-    tempa -= mnGravity * Eigen::Vector3f(tempa / tempa.norm());
+    tempa -= mnGravity * Eigen::Vector3f(tempa / tempa.norm()); // Remove gravity
 
     ang += dt * tempw;
     vel += dt * tempa;
@@ -178,10 +180,12 @@ bool System::initialize(const ImageData& Image,
   bg.setZero();
   ba.setZero();
 
+  // 如果开始时是在运动，那么bg，ba设为0
   if (nImuCount == 1) {
     g = am;
     g.normalize();
-  } else {
+  } // 在运动
+  else {
     wm /= nImuCount;
     am /= nImuCount;
 
@@ -277,6 +281,7 @@ void System::run() {
   std::pair<ImageData, std::vector<ImuData>> pMeasurements;
   if (!mpInputBuffer->GetMeasurements(mnCamTimeOffset, pMeasurements)) return;
 
+  /* Initialization */
   if (!mbIsInitialized)
     if (!initialize(pMeasurements.first, pMeasurements.second)) return;
 

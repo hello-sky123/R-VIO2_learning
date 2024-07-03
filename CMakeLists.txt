@@ -31,7 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp roslib rosbag tf std_msgs sensor_msgs geometry_msgs nav_msgs cv_bridge
 )
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV 3.0 QUIET)
+find_package(OpenCV REQUIRED)
 
 # Include directories for headers
 include_directories(
