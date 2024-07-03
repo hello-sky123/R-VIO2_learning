@@ -1,88 +1,83 @@
 /**
-* This file is part of R-VIO2.
-*
-* Copyright (C) 2022 Zheng Huai <zhuai@udel.edu> and Guoquan Huang <ghuang@udel.edu>
-* For more information see <http://github.com/rpng/R-VIO2> 
-*
-* R-VIO2 is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* R-VIO2 is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with R-VIO2. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of R-VIO2.
+ *
+ * Copyright (C) 2022 Zheng Huai <zhuai@udel.edu> and Guoquan Huang
+ * <ghuang@udel.edu> For more information see <http://github.com/rpng/R-VIO2>
+ *
+ * R-VIO2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * R-VIO2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with R-VIO2. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef NODE_H
 #define NODE_H
 
+#include <Eigen/Core>
+#include <opencv2/core/core.hpp>
 #include <vector>
 
-#include <Eigen/Core>
+namespace RVIO2 {
 
-#include <opencv2/core/core.hpp>
+class Feature {
+ public:
+  Feature(const int nFeatureId, const int nImageId);
 
+  inline void Inited() { mbIsInited = true; }
 
-namespace RVIO2
-{
+  inline void Marginalized() { mbIsMarginalized = true; }
 
-class Feature
-{
-public:
+  inline void SetPosition(const Eigen::Vector3f& position) {
+    mPosition = position;
+  }
 
-    Feature(const int nFeatureId, const int nImageId);
+  inline void SetFejPosition(const Eigen::Vector3f& position) {
+    mFejPosition = position;
+  }
 
-    inline void Inited() {mbIsInited = true;}
+  inline const int FeatureId() const { return mnFeatureId; }
 
-    inline void Marginalized() {mbIsMarginalized = true;}
+  inline const int RootImageId() const { return mnRootImageId; }
 
-    inline void SetPosition(const Eigen::Vector3f& position) {mPosition = position;}
+  inline const bool IsInited() const { return mbIsInited; }
 
-    inline void SetFejPosition(const Eigen::Vector3f& position) {mFejPosition = position;}
+  inline const bool IsMarginalized() const { return mbIsMarginalized; }
 
-    inline const int FeatureId() const {return mnFeatureId;}
+  inline Eigen::Vector3f& Position() { return mPosition; }
 
-    inline const int RootImageId() const {return mnRootImageId;}
+  inline Eigen::Vector3f& FejPosition() { return mFejPosition; }
 
-    inline const bool IsInited() const {return mbIsInited;}
+  inline void reset(const int nImageId) {
+    mnRootImageId = nImageId;
+    mbIsInited = false;
+    mbIsMarginalized = false;
+  }
 
-    inline const bool IsMarginalized() const {return mbIsMarginalized;}
+  inline void clear() {
+    mnRootImageId = -1;
+    mbIsInited = false;
+    mbIsMarginalized = false;
+  }
 
-    inline Eigen::Vector3f& Position() {return mPosition;}
+ private:
+  int mnFeatureId;    // start from 0
+  int mnRootImageId;  // start from 0
 
-    inline Eigen::Vector3f& FejPosition() {return mFejPosition;}
+  bool mbIsInited;
+  bool mbIsMarginalized;
 
-    inline void reset(const int nImageId)
-    {
-        mnRootImageId = nImageId;
-        mbIsInited = false;
-        mbIsMarginalized = false;
-    }
-
-    inline void clear()
-    {
-        mnRootImageId = -1;
-        mbIsInited = false;
-        mbIsMarginalized = false;
-    }
-
-private:
-
-    int mnFeatureId;   // start from 0
-    int mnRootImageId; // start from 0
-
-    bool mbIsInited;
-    bool mbIsMarginalized;
-
-    Eigen::Vector3f mPosition;
-    Eigen::Vector3f mFejPosition;
+  Eigen::Vector3f mPosition;
+  Eigen::Vector3f mFejPosition;
 };
 
-} // namespace RVIO2
+}  // namespace RVIO2
 
 #endif
