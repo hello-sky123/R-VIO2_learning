@@ -22,46 +22,47 @@
 #define NODE_H
 
 #include <Eigen/Core>
-#include <opencv2/core/core.hpp>
-#include <vector>
 
 namespace RVIO2 {
 
 class Feature {
  public:
-  Feature(const int nFeatureId, const int nImageId);
+  // 常量限定只在函数定义时有效
+  Feature(int nFeatureId, int nImageId);
 
-  inline void Inited() { mbIsInited = true; }
+  // 完全在class内部定义的函数，自动成为inline函数
+  void Inited() { mbIsInited = true; }
 
-  inline void Marginalized() { mbIsMarginalized = true; }
+  void Marginalized() { mbIsMarginalized = true; }
 
-  inline void SetPosition(const Eigen::Vector3f& position) {
+  void SetPosition(const Eigen::Vector3f& position) {
     mPosition = position;
   }
 
-  inline void SetFejPosition(const Eigen::Vector3f& position) {
+  void SetFejPosition(const Eigen::Vector3f& position) {
     mFejPosition = position;
   }
 
-  inline const int FeatureId() const { return mnFeatureId; }
+  // 使用const来修饰基本类型是多余的，因为它们的值本身就不能被更改
+  int FeatureId() const { return mnFeatureId; }
 
-  inline const int RootImageId() const { return mnRootImageId; }
+  int RootImageId() const { return mnRootImageId; }
 
-  inline const bool IsInited() const { return mbIsInited; }
+  bool IsInited() const { return mbIsInited; }
 
-  inline const bool IsMarginalized() const { return mbIsMarginalized; }
+  bool IsMarginalized() const { return mbIsMarginalized; }
 
-  inline Eigen::Vector3f& Position() { return mPosition; }
+  Eigen::Vector3f& Position() { return mPosition; }
 
-  inline Eigen::Vector3f& FejPosition() { return mFejPosition; }
+  Eigen::Vector3f& FejPosition() { return mFejPosition; }
 
-  inline void reset(const int nImageId) {
+  void reset(const int nImageId) {
     mnRootImageId = nImageId;
     mbIsInited = false;
     mbIsMarginalized = false;
   }
 
-  inline void clear() {
+  void clear() {
     mnRootImageId = -1;
     mbIsInited = false;
     mbIsMarginalized = false;

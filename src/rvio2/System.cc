@@ -74,7 +74,7 @@ System::System(const std::string& strSettingsFile) {
 
   mnCamRate = fsSettings["Camera.fps"];
 
-  if (mbUseGroundTruthCalib)
+  if (mbUseGroundTruthCalib) // 相机-IMU时间偏移
     mnCamTimeOffset = fsSettings["Camera.nTimeOffset_GT"];
   else
     mnCamTimeOffset = fsSettings["Camera.nTimeOffset"];
@@ -132,7 +132,7 @@ bool System::initialize(const ImageData& Image,
   Eigen::Vector3f vel = Eigen::Vector3f::Zero();
   Eigen::Vector3f len = Eigen::Vector3f::Zero();
 
-  for (const ImuData& data : vImuData) {
+  for (const ImuData& data: vImuData) {
     Eigen::Vector3f tempw = data.AngularVel;
     Eigen::Vector3f tempa = data.LinearAccel;
     double dt = data.TimeInterval;
@@ -146,7 +146,7 @@ bool System::initialize(const ImageData& Image,
 
   // Not move yet
   if (ang.norm() * 180. / M_PI < mnAngleThrd && len.norm() < mnLengthThrd) {
-    for (const ImuData& data : vImuData) {
+    for (const ImuData& data: vImuData) {
       wm += data.AngularVel;
       am += data.LinearAccel;
       Dt += data.TimeInterval;
@@ -228,14 +228,14 @@ bool System::initialize(const ImageData& Image,
   LocalFactor(7, 7) = 1. / sqrt(Dt) / msigmaAccelNoise;
   LocalFactor(8, 8) = 1. / sqrt(Dt) / msigmaAccelNoise;
 
-  LocalFactor(9, 9) = mbUseGroundTruthCalib ? 1. / 2e-2 : 1. / 2e-1;  // qci
-  LocalFactor(10, 10) = mbUseGroundTruthCalib ? 1. / 2e-2 : 1. / 2e-1;
-  LocalFactor(11, 11) = mbUseGroundTruthCalib ? 1. / 2e-2 : 1. / 2e-1;
-  LocalFactor(12, 12) = mbUseGroundTruthCalib ? 1. / 1e-2 : 1. / 1e-1;  // pci
-  LocalFactor(13, 13) = mbUseGroundTruthCalib ? 1. / 1e-2 : 1. / 1e-1;
-  LocalFactor(14, 14) = mbUseGroundTruthCalib ? 1. / 1e-2 : 1. / 1e-1;
+  LocalFactor(9, 9) = mbUseGroundTruthCalib ? 1. / 2e-2: 1. / 2e-1;  // qci
+  LocalFactor(10, 10) = mbUseGroundTruthCalib ? 1. / 2e-2: 1. / 2e-1;
+  LocalFactor(11, 11) = mbUseGroundTruthCalib ? 1. / 2e-2: 1. / 2e-1;
+  LocalFactor(12, 12) = mbUseGroundTruthCalib ? 1. / 1e-2: 1. / 1e-1;  // pci
+  LocalFactor(13, 13) = mbUseGroundTruthCalib ? 1. / 1e-2: 1. / 1e-1;
+  LocalFactor(14, 14) = mbUseGroundTruthCalib ? 1. / 1e-2: 1. / 1e-1;
   LocalFactor(15, 15) =
-      mbUseGroundTruthCalib ? 10 * mnImuRate : mnCamRate;  // td
+      mbUseGroundTruthCalib ? 10 * mnImuRate: mnCamRate;  // td
 
   LocalFactor(16, 16) = 1. / 1e-3;  // v
   LocalFactor(17, 17) = 1. / 1e-3;
@@ -273,6 +273,7 @@ bool System::initialize(const ImageData& Image,
 }
 
 void System::run() {
+  // 获取一帧图像和对应的它和上一帧图像之间的IMU数据
   std::pair<ImageData, std::vector<ImuData>> pMeasurements;
   if (!mpInputBuffer->GetMeasurements(mnCamTimeOffset, pMeasurements)) return;
 

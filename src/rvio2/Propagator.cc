@@ -52,7 +52,7 @@ Propagator::Propagator(const cv::FileStorage& fsSettings) {
 void Propagator::CreateNewFactor(const std::vector<ImuData>& vImuData,
                                  const Eigen::VectorXf& Localx,
                                  Eigen::Matrix<float, 16, 1>& x,
-                                 Eigen::Matrix<float, 15, 27>& H) {
+                                 Eigen::Matrix<float, 15, 27>& H) const {
   Eigen::VectorXf vb = Localx.tail(9);
   Eigen::Vector3f vk = vb.segment(0, 3);
   Eigen::Vector3f bg = vb.segment(3, 3);
@@ -86,7 +86,7 @@ void Propagator::CreateNewFactor(const std::vector<ImuData>& vImuData,
 
   double Dt = 0;
 
-  for (const ImuData& data : vImuData) {
+  for (const ImuData& data: vImuData) {
     Eigen::Vector3f wm = data.AngularVel;
     Eigen::Vector3f am = data.LinearAccel;
     double dt = data.TimeInterval;
@@ -183,10 +183,9 @@ void Propagator::LocalQR(const int nImageId,
                          const Eigen::Matrix<float, 16, 1>& x,
                          const Eigen::Matrix<float, 15, 27>& H,
                          Eigen::VectorXf& Localx,
-                         Eigen::MatrixXf& LocalFactor) {
+                         Eigen::MatrixXf& LocalFactor) const {
   int L = LocalFactor.rows();
-  int W = nImageId > mnLocalWindowSize ? 6 * mnLocalWindowSize + 9
-                                       : 6 * (nImageId - 1) + 9;
+  int W = nImageId > mnLocalWindowSize ? 6 * mnLocalWindowSize + 9: 6 * (nImageId - 1) + 9;
 
   int Lg = L - W - 7 - 3;
   int Lv = L - 9;
@@ -236,7 +235,7 @@ void Propagator::LocalQR(const int nImageId,
 void Propagator::propagate(const int nImageId,
                            const std::vector<ImuData>& vImuData,
                            Eigen::VectorXf& Localx,
-                           Eigen::MatrixXf& LocalFactor) {
+                           Eigen::MatrixXf& LocalFactor) const {
   Eigen::Matrix<float, 16, 1> x;
   Eigen::Matrix<float, 15, 27> H;
   CreateNewFactor(vImuData, Localx, x, H);

@@ -25,9 +25,7 @@
 #include <tf/transform_broadcaster.h>
 
 #include <Eigen/Core>
-#include <Eigen/Sparse>
 #include <deque>
-#include <opencv2/core/core.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -43,14 +41,14 @@ namespace RVIO2 {
 
 class System {
  public:
-  System(const std::string& strSettingsFile);
+  explicit System(const std::string& strSettingsFile);
 
   ~System();
 
   void run();
 
-  void PushImuData(ImuData* pData) { mpInputBuffer->PushImuData(pData); }
-  void PushImageData(ImageData* pData) { mpInputBuffer->PushImageData(pData); }
+  void PushImuData(ImuData* pData) const { mpInputBuffer->PushImuData(pData); }
+  void PushImageData(ImageData* pData) const { mpInputBuffer->PushImageData(pData); }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

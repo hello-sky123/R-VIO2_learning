@@ -481,7 +481,7 @@ void Updater::update(
     const std::deque<Eigen::Vector3f>& qLocalw,
     const std::deque<Eigen::Vector3f>& qLocalv, Eigen::VectorXf& Localx,
     Eigen::MatrixXf& LocalFactor) {
-  int nWinSize = nImageId > mnLocalWindowSize ? mnLocalWindowSize : nImageId;
+  int nWinSize = nImageId > mnLocalWindowSize ? mnLocalWindowSize: nImageId;
   int nDimOfWinx = 7 * nWinSize;
   int nDimOfWinSR = 6 * nWinSize + 9;
 
@@ -893,17 +893,17 @@ void Updater::update(
   int nStateOffset = 0;
   int nErrorOffset = 0;
 
-  for (const int& id : mvLostActiveFeatureIDs) {
+  for (const int& id: mvLostActiveFeatureIDs) {
     mFeatures.at(id)->Position() += dLocalx.segment(nErrorOffset, 3);
     nErrorOffset += 3;
   }
 
-  for (const int& id : vActiveFeatureIDs) {
+  for (const int& id: vActiveFeatureIDs) {
     mFeatures.at(id)->Position() += dLocalx.segment(nErrorOffset, 3);
     nErrorOffset += 3;
   }
 
-  for (const int& id : mvNewActiveFeatureIDs) {
+  for (const int& id: mvNewActiveFeatureIDs) {
     mFeatures.at(id)->Position() += dLocalx.segment(nErrorOffset, 3);
     nErrorOffset += 3;
   }
@@ -1123,7 +1123,7 @@ void Updater::composition(const int nImageId,
         LocalFactor.bottomRightCorner(nDimOfSR, nDimOfSR + 1);
     LocalFactor.swap(tempM);
 
-    for (const int& id : mvLostActiveFeatureIDs)
+    for (const int& id: mvLostActiveFeatureIDs)
       mFeatures.at(id)->Marginalized();
 
     mvLostActiveFeatureIDs.clear();

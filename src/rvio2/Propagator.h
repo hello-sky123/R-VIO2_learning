@@ -22,7 +22,7 @@
 #define PROPAGATOR_H
 
 #include <Eigen/Core>
-#include <opencv2/core/core.hpp>
+#include <Eigen/Dense>
 #include <unordered_map>
 #include <vector>
 
@@ -33,10 +33,10 @@ namespace RVIO2 {
 
 class Propagator {
  public:
-  Propagator(const cv::FileStorage& fsSettings);
+  explicit Propagator(const cv::FileStorage& fsSettings);
 
-  void propagate(const int nImageId, const std::vector<ImuData>& vImuData,
-                 Eigen::VectorXf& Localx, Eigen::MatrixXf& LocalFactor);
+  void propagate(int nImageId, const std::vector<ImuData>& vImuData,
+                 Eigen::VectorXf& Localx, Eigen::MatrixXf& LocalFactor) const;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -44,13 +44,13 @@ class Propagator {
   void CreateNewFactor(const std::vector<ImuData>& vImuData,
                        const Eigen::VectorXf& Localx,
                        Eigen::Matrix<float, 16, 1>& x,
-                       Eigen::Matrix<float, 15, 27>& H);
+                       Eigen::Matrix<float, 15, 27>& H) const;
 
-  void LocalQR(const int nImageId, const Eigen::Matrix<float, 16, 1>& x,
+  void LocalQR(int nImageId, const Eigen::Matrix<float, 16, 1>& x,
                const Eigen::Matrix<float, 15, 27>& H, Eigen::VectorXf& Localx,
-               Eigen::MatrixXf& LocalFactor);
+               Eigen::MatrixXf& LocalFactor) const;
 
-  inline void FlipToHead(Eigen::Ref<SqrMatrixType> Mat, const int dim) {
+  static void FlipToHead(Eigen::Ref<SqrMatrixType> Mat, const int dim) {
     int cols = Mat.cols();
     Eigen::MatrixXf tempM1 = Mat.rightCols(dim);
     Eigen::MatrixXf tempM2 = Mat.leftCols(cols - dim);
@@ -58,9 +58,9 @@ class Propagator {
     Mat.rightCols(cols - dim).swap(tempM2);
   }
 
-  inline Eigen::MatrixXf pseudoInverse(
-      const Eigen::MatrixXf& Mat,
-      float epsilon = std::numeric_limits<float>::epsilon()) {
+  static Eigen::MatrixXf pseudoInverse(const Eigen::MatrixXf& Mat,
+                                       float epsilon = std::numeric_limits<float>::epsilon())
+  {
     Eigen::JacobiSVD<Eigen::MatrixXf> svd(
         Mat, Eigen::ComputeFullU | Eigen::ComputeFullV);
     float tolerance = epsilon * std::max(Mat.cols(), Mat.rows()) *

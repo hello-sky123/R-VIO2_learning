@@ -50,7 +50,7 @@ FeatureDetector::FeatureDetector(const cv::FileStorage& fsSettings) {
 
 int FeatureDetector::DetectWithSubPix(const cv::Mat& im, const int nCorners,
                                       const int s,
-                                      std::vector<cv::Point2f>& vCorners) {
+                                      std::vector<cv::Point2f>& vCorners) const {
   vCorners.clear();
   vCorners.reserve(nCorners);
 
@@ -74,7 +74,7 @@ void FeatureDetector::ChessGrid(const std::vector<cv::Point2f>& vCorners) {
   mvvGrid.clear();
   mvvGrid.resize(mnBlocks);
 
-  for (const cv::Point2f& pt : vCorners) {
+  for (const cv::Point2f& pt: vCorners) {
     if (pt.x <= mnOffsetX || pt.y <= mnOffsetY ||
         pt.x >= (mnImageCols - mnOffsetX) || pt.y >= (mnImageRows - mnOffsetY))
       continue;
@@ -93,7 +93,7 @@ int FeatureDetector::FindNewer(const std::vector<cv::Point2f>& vCorners,
                                std::vector<cv::Point2f>& vNewCorners) {
   ChessGrid(vRefCorners);
 
-  for (const cv::Point2f& pt : vCorners) {
+  for (const cv::Point2f& pt: vCorners) {
     if (pt.x <= mnOffsetX || pt.y <= mnOffsetY ||
         pt.x >= (mnImageCols - mnOffsetX) || pt.y >= (mnImageRows - mnOffsetY))
       continue;
@@ -117,7 +117,7 @@ int FeatureDetector::FindNewer(const std::vector<cv::Point2f>& vCorners,
       if (!mvvGrid.at(nBlockIdx).empty()) {
         int cnt = 0;
 
-        for (const cv::Point2f& bpt : mvvGrid.at(nBlockIdx)) {
+        for (const cv::Point2f& bpt: mvvGrid.at(nBlockIdx)) {
           if (cv::norm(pt - bpt) > mnMinDistance)
             cnt++;
           else

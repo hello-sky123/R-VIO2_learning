@@ -58,7 +58,7 @@ struct ImageData {
 
 class InputBuffer {
  public:
-  InputBuffer(const cv::FileStorage& fsSettings);
+  explicit InputBuffer(const cv::FileStorage& fsSettings);
 
   void PushImuData(ImuData* pData);
   void PushImageData(ImageData* pData);

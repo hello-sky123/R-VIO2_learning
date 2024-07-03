@@ -24,7 +24,7 @@ namespace RVIO2 {
 
 Ransac::Ransac(const cv::FileStorage& fsSettings) {
   int nIterations = fsSettings["Tracker.nRansacIter"];
-  mnIterations = nIterations < 16 ? 16 : nIterations;
+  mnIterations = nIterations < 16 ? 16: nIterations;
 
   const int bUseSampson = fsSettings["Tracker.UseSampson"];
   mbUseSampson = bUseSampson;
@@ -36,7 +36,7 @@ Ransac::Ransac(const cv::FileStorage& fsSettings) {
 void Ransac::PairTwoPoints(
     const int nInlierCandidates,
     const std::vector<int>& vInlierCandidateIndexes,
-    std::vector<std::pair<int, int>>& vTwoPointIndexes) {
+    std::vector<std::pair<int, int>>& vTwoPointIndexes) const {
   for (int i = 0; i < mnIterations; ++i) {
     int idx1 = i;
     int idx2;
@@ -92,7 +92,7 @@ int Ransac::CountVotes(const Eigen::MatrixXf& Points1,
                        const std::vector<int>& vInlierCandidateIndexes,
                        const Eigen::Matrix3f& E) {
   int nVotes = 0;
-  for (const int& idx : vInlierCandidateIndexes) {
+  for (const int& idx: vInlierCandidateIndexes) {
     if (mbUseSampson) {
       if (SampsonError(Points1.col(idx), Points2.col(idx), E) < mnSampsonThrd)
         nVotes++;

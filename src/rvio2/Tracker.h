@@ -109,7 +109,7 @@ class Tracker {
     OrienVec(pt0, e0);
     OrienVec(ptk, ek);
     float theta = fabs(acos(ek.dot(mRx * e0)));
-    return 40 * sin(theta) > 1 ? theta * 180 / M_PI : 0;
+    return 40 * sin(theta) > 1 ? theta * 180 / M_PI: 0;
   }
 
  public:

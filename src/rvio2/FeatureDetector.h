@@ -28,10 +28,10 @@ namespace RVIO2 {
 
 class FeatureDetector {
  public:
-  FeatureDetector(const cv::FileStorage& fsSettings);
+  explicit FeatureDetector(const cv::FileStorage& fsSettings);
 
-  int DetectWithSubPix(const cv::Mat& im, const int nCorners, const int s,
-                       std::vector<cv::Point2f>& vCorners);
+  int DetectWithSubPix(const cv::Mat& im, int nCorners, int s,
+                       std::vector<cv::Point2f>& vCorners) const;
 
   int FindNewer(const std::vector<cv::Point2f>& vCorners,
                 const std::vector<cv::Point2f>& vRefCorners,
@@ -40,7 +40,6 @@ class FeatureDetector {
  private:
   void ChessGrid(const std::vector<cv::Point2f>& vCorners);
 
- private:
   int mnImageCols;
   int mnImageRows;
 

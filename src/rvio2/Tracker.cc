@@ -55,7 +55,7 @@ Tracker::Tracker(const cv::FileStorage& fsSettings) {
   mnMinTrackingLength = fsSettings["Tracker.nMinTrackingLength"];
 
   const int nMaxSlamPoints = fsSettings["Tracker.nMaxSlamPoints"];
-  mbEnableSlam = nMaxSlamPoints > 0 ? true : false;
+  mbEnableSlam = nMaxSlamPoints > 0 ? true: false;
 
   mnGoodParallax = fsSettings["Tracker.nGoodParallax"];
 
@@ -196,10 +196,10 @@ void Tracker::DisplayNewer(const int nImageId, const cv::Mat& image,
   imOut.encoding = "bgr8";
   cvtColor(image, imOut.image, CV_GRAY2BGR);
 
-  for (const cv::Point2f& pt : vRefFeatUVs)
+  for (const cv::Point2f& pt: vRefFeatUVs)
     cv::circle(imOut.image, pt, 3, blue, 0);
 
-  for (const cv::Point2f& pt : vNewFeatUVs)
+  for (const cv::Point2f& pt: vNewFeatUVs)
     cv::circle(imOut.image, pt, 3, green, -1);
 
   cv::putText(imOut.image, std::to_string(nImageId), cv::Point2f(15, 30),
@@ -463,7 +463,7 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
                      const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
                      const std::unordered_map<int, Feature*>& mFeatures) {
   if (!mvFeatInfoForInitSlam.empty()) {
-    for (const std::pair<int, Type>& vit : mvFeatInfoForInitSlam) {
+    for (const std::pair<int, Type>& vit: mvFeatInfoForInitSlam) {
       int id = vit.first;
       int type = vit.second;
 
@@ -490,7 +490,7 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
   }
 
   if (!mvFeatInfoForPoseOnly.empty()) {
-    for (const std::pair<int, Type>& vit : mvFeatInfoForPoseOnly) {
+    for (const std::pair<int, Type>& vit: mvFeatInfoForPoseOnly) {
       int id = vit.first;
       int type = vit.second;
 
@@ -516,7 +516,7 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
   }
 
   if (!mvFeatIDsLoseTrack.empty()) {
-    for (const int& id : mvFeatIDsLoseTrack) {
+    for (const int& id: mvFeatIDsLoseTrack) {
       mFeatures.at(id)->clear();
       mvFeatIDsInactive.push_back(id);
       mmFeatTrackingHistory.at(id).clear();

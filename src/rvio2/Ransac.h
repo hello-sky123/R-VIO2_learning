@@ -30,7 +30,7 @@ namespace RVIO2 {
 
 class Ransac {
  public:
-  Ransac(const cv::FileStorage& fsSettings);
+  explicit Ransac(const cv::FileStorage& fsSettings);
 
   void FindInliers(const Eigen::MatrixXf& Points1,
                    const Eigen::MatrixXf& Points2, const Eigen::Matrix3f& R,
@@ -39,11 +39,11 @@ class Ransac {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-  void PairTwoPoints(const int nInlierCandidates,
+  void PairTwoPoints(int nInlierCandidates,
                      const std::vector<int>& vInlierCandidateIndexes,
-                     std::vector<std::pair<int, int>>& vTwoPointIndexes);
+                     std::vector<std::pair<int, int>>& vTwoPointIndexes) const;
 
-  void ComputeE(const int nIterNum, const Eigen::MatrixXf& Points1,
+  static void ComputeE(int nIterNum, const Eigen::MatrixXf& Points1,
                 const Eigen::MatrixXf& Points2,
                 const std::vector<std::pair<int, int>>& vTwoPointIndexes,
                 const Eigen::Matrix3f& R, Eigen::Matrix3f& E);
@@ -52,22 +52,21 @@ class Ransac {
                  const std::vector<int>& vInlierCandidateIndexes,
                  const Eigen::Matrix3f& E);
 
-  inline float SampsonError(const Eigen::Vector3f& pt1,
+  static float SampsonError(const Eigen::Vector3f& pt1,
                             const Eigen::Vector3f& pt2,
                             const Eigen::Matrix3f& E) {
     Eigen::Vector3f Fx1 = E * pt1;
     Eigen::Vector3f Fx2 = E.transpose() * pt2;
-    return (pow(pt2.dot(E * pt1), 2)) /
-           (pow(Fx1(0), 2) + pow(Fx1(1), 2) + pow(Fx2(0), 2) + pow(Fx2(1), 2));
+    return (powf(pt2.dot(E * pt1), 2)) /
+           (powf(Fx1(0), 2) + powf(Fx1(1), 2) + powf(Fx2(0), 2) + powf(Fx2(1), 2));
   }
 
-  inline float AlgebraicError(const Eigen::Vector3f& pt1,
+  static float AlgebraicError(const Eigen::Vector3f& pt1,
                               const Eigen::Vector3f& pt2,
                               const Eigen::Matrix3f& E) {
-    return fabs(pt2.dot(E * pt1));
+    return fabsf(pt2.dot(E * pt1));
   }
 
- private:
   int mnIterations;
 
   bool mbUseSampson;
