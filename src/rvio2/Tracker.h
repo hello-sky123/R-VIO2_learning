@@ -27,14 +27,12 @@
 #include <Eigen/Core>
 #include <list>
 #include <opencv2/core/core.hpp>
-#include <opencv2/core/eigen.hpp>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "Feature.h"
 #include "FeatureDetector.h"
-#include "InputBuffer.h"
 #include "Ransac.h"
 
 namespace RVIO2 {
@@ -58,53 +56,53 @@ enum Type {
 
 class Tracker {
  public:
-  Tracker(const cv::FileStorage& fsSettings);
+  explicit Tracker(const cv::FileStorage& fsSettings);
 
   ~Tracker();
 
-  void track(const int nImageId, const cv::Mat& image,
+  void track(int nImageId, const cv::Mat& image,
              const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
              int nMapPtsNeeded, std::unordered_map<int, Feature*>& mFeatures);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-  bool start(const int nImageId, const cv::Mat& image,
+  bool start(int nImageId, const cv::Mat& image,
              const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
              std::unordered_map<int, Feature*>& mFeatures);
 
-  void manage(const int nImageId, const cv::Mat& image,
+  void manage(int nImageId, const cv::Mat& image,
               const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
               const std::unordered_map<int, Feature*>& mFeatures);
 
-  void preprocess(const int nImageId, const cv::Mat& image,
+  void preprocess(int nImageId, const cv::Mat& image,
                   const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG);
 
   void undistort(const std::vector<cv::Point2f>& src,
-                 std::vector<cv::Point2f>& dst);
+                 std::vector<cv::Point2f>& dst) const;
 
-  void VisualTracking(const int nImageId, const cv::Mat image,
+  void VisualTracking(int nImageId, const cv::Mat& image,
                       int nMapPtsNeeded,
                       std::unordered_map<int, Feature*>& mFeatures);
 
-  void DisplayTrack(const int nImageId, const cv::Mat& image,
+  static void DisplayTrack(int nImageId, const cv::Mat& image,
                     const std::vector<cv::Point2f>& vPrevFeatUVs,
                     const std::vector<cv::Point2f>& vCurrFeatUVs,
                     const std::vector<unsigned char>& vInlierFlags,
                     cv_bridge::CvImage& imOut);
 
-  void DisplayNewer(const int nImageId, const cv::Mat& image,
+  static void DisplayNewer(int nImageId, const cv::Mat& image,
                     const std::vector<cv::Point2f>& vRefFeatUVs,
                     const std::vector<cv::Point2f>& vNewFeatUVs,
                     cv_bridge::CvImage& imOut);
 
-  inline void OrienVec(const cv::Point2f& pt, Eigen::Vector3f& e) {
+  static void OrienVec(const cv::Point2f& pt, Eigen::Vector3f& e) {
     float phi = atan2(pt.y, sqrt(pow(pt.x, 2) + 1));
     float psi = atan2(pt.x, 1);
     e << cos(phi) * sin(psi), sin(phi), cos(phi) * cos(psi);
   }
 
-  inline float Parallax(const cv::Point2f& pt0, const cv::Point2f& ptk) {
+  float Parallax(const cv::Point2f& pt0, const cv::Point2f& ptk) const {
     Eigen::Vector3f e0, ek;
     OrienVec(pt0, e0);
     OrienVec(ptk, ek);
@@ -125,11 +123,11 @@ class Tracker {
   bool mbIsRGB;
   bool mbIsFisheye;
 
-  bool mbRestartVT;
-  bool mbRefreshVT;
+  bool mbRestartVT; // restart visual tracking
+  bool mbRefreshVT; // refresh visual tracking
 
   bool mbEnableSlam;
-  bool mbEnableFilter;
+  bool mbEnableFilter; // Use image filter or not
   bool mbEnableEqualizer;
 
   int mnMaxFeatsPerImage;
@@ -144,15 +142,15 @@ class Tracker {
   cv::Mat mK;
   cv::Mat mD;
 
-  Eigen::Matrix3f mRx;
-  Eigen::Matrix3f mRr;
+  Eigen::Matrix3f mRx; // 当前帧相机坐标系到滑窗内最早相机坐标系的旋转矩阵
+  Eigen::Matrix3f mRr; // 当前帧相机坐标系到滑窗内最晚相机坐标系的旋转矩阵
 
-  std::list<Eigen::Matrix3f> mlCamOrientations;
-  std::list<Eigen::Vector3f> mlCamPositions;
+  std::list<Eigen::Matrix3f> mlCamOrientations; // 相机到全局的姿态
+  std::list<Eigen::Vector3f> mlCamPositions; // 相机到全局的位置
 
-  std::unordered_map<int, std::vector<cv::Point2f>> mmFeatTrackingHistory;
-  std::vector<int> mvFeatIDsToTrack;
-  std::vector<cv::Point2f> mvFeatPtsToTrack;
+  std::unordered_map<int, std::vector<cv::Point2f>> mmFeatTrackingHistory; // 所有特征点的追踪历史
+  std::vector<int> mvFeatIDsToTrack; // 要追踪的特征点id
+  std::vector<cv::Point2f> mvFeatPtsToTrack; // 要追踪的特征点坐标
 
   std::vector<int> mvFeatIDsInactive;
   std::vector<int> mvFeatIDsLoseTrack;

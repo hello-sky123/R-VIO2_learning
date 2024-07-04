@@ -116,6 +116,7 @@ System::~System() {
   delete mpTracker;
 }
 
+// 初始化系统
 bool System::initialize(const ImageData& Image,
                         const std::vector<ImuData>& vImuData) {
   static int nImuCount = 0;
@@ -184,7 +185,7 @@ bool System::initialize(const ImageData& Image,
   if (nImuCount == 1) {
     g = am;
     g.normalize();
-  } // 在运动
+  } // 如果开始时是静止的，那么计算平均值
   else {
     wm /= nImuCount;
     am /= nImuCount;
@@ -196,7 +197,7 @@ bool System::initialize(const ImageData& Image,
     ba = am - mnGravity * g;
   }
 
-  Localx.setZero(27);
+  Localx.setZero(27); // 状态向量，包含了x_{gk}(全局信息，10维), x_{Pk}(时空标定信息，外参时延)，v, bg, ba
 
   if (mbEnableAlignment) {
     Eigen::Vector3f zv = g;
@@ -208,6 +209,7 @@ bool System::initialize(const ImageData& Image,
     Eigen::Vector3f yv = SkewSymm(zv) * xv;
     yv.normalize();
 
+    // The orientation of {G} in {R0}
     Eigen::Matrix3f R;
     R << xv, yv, zv;
 
@@ -221,7 +223,8 @@ bool System::initialize(const ImageData& Image,
   Localx(17) = mnCamTimeOffset;
   Localx.tail(6) << bg, ba;
 
-  LocalFactor.setZero(25, 26);
+  // 旋转使用最小表达
+  LocalFactor.setZero(25, 25);
   LocalFactor(0, 0) = 1. / 1e-6;  // qG
   LocalFactor(1, 1) = 1. / 1e-6;
   LocalFactor(2, 2) = 1. / 1e-6;
@@ -254,11 +257,12 @@ bool System::initialize(const ImageData& Image,
   Eigen::Vector3f v = Localx.segment(18, 3);
   Eigen::Vector3f w = wm_last - Localx.segment(21, 3);
 
-  mqLocalv.push_back(v);
-  mqLocalw.push_back(w);
+  mqLocalv.push_back(v); // 保存局部速度
+  mqLocalw.push_back(w); // 保存局部角速度
 
   mbIsInitialized = true;
 
+  // 输出全局位姿
   if (mbRecordOutputs) {
     Eigen::Vector4f qkG = Localx.segment(0, 4);
     Eigen::Vector3f pGk = -QuatToRot(QuatInv(qkG)) * Localx.segment(4, 3);
@@ -269,8 +273,8 @@ bool System::initialize(const ImageData& Image,
   }
 
   // Start tracker
-  Eigen::Matrix3f RcG = mRci * QuatToRot(Localx.head(4));
-  Eigen::Vector3f tcG = mRci * Localx.segment(4, 3) + mtci;
+  Eigen::Matrix3f RcG = mRci * QuatToRot(Localx.head(4)); // 相机到全局的旋转
+  Eigen::Vector3f tcG = mRci * Localx.segment(4, 3) + mtci; // 相机到全局的平移
   mpTracker->track(0, im_last, RcG, tcG, 0, mmFeatures);
 
   return true;

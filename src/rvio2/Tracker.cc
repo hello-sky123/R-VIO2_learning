@@ -55,7 +55,7 @@ Tracker::Tracker(const cv::FileStorage& fsSettings) {
   mnMinTrackingLength = fsSettings["Tracker.nMinTrackingLength"];
 
   const int nMaxSlamPoints = fsSettings["Tracker.nMaxSlamPoints"];
-  mbEnableSlam = nMaxSlamPoints > 0 ? true: false;
+  mbEnableSlam = nMaxSlamPoints > 0;
 
   mnGoodParallax = fsSettings["Tracker.nGoodParallax"];
 
@@ -101,13 +101,14 @@ Tracker::~Tracker() {
   delete mpFeatureDetector;
 }
 
+// 预处理图像，包括转换为灰度图像、高斯模糊、自适应阈值、盒滤波、直方图均衡化等
 void Tracker::preprocess(const int nImageId, const cv::Mat& image,
                          const Eigen::Matrix3f& RcG,
                          const Eigen::Vector3f& tcG) {
   // Convert to grayscale
   if (image.channels() == 3) {
     if (mbIsRGB)
-      cvtColor(image, image, CV_RGB2GRAY);
+      cvtColor(image, image, CV_RGB2GRAY); // 颜色空间转换
     else
       cvtColor(image, image, CV_BGR2GRAY);
   } else if (image.channels() == 4) {
@@ -118,18 +119,24 @@ void Tracker::preprocess(const int nImageId, const cv::Mat& image,
   }
 
   if (mbEnableFilter) {
-    cv::GaussianBlur(image, image, cv::Size(5, 5), 0);
+    // 平滑图像，减少噪声的影响，从而特征点提取的准确性和稳定性
+    cv::GaussianBlur(image, image, cv::Size(5, 5), 0); // 标准差设置为0，OpenCV会根据核的大小自动计算标准差
+    // 自适应阈值二值化，根据图像局部区域的灰度值计算阈值，自适应方法可以是cv::ADAPTIVE_THRESH_MEAN_C
+    // 或cv::ADAPTIVE_THRESH_GAUSSIAN_C，根据邻域内的平均值或高斯加权平均值来计算阈值
     cv::adaptiveThreshold(image, image, 225, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
                           cv::THRESH_BINARY_INV, 5, 0);
+    // 盒滤波是一种简单的图像滤波技术，它通过将每个像素点的值替换为邻域内的像素值的平均值来实现，其中邻域通常是正方形或矩形
     cv::boxFilter(image, image, image.depth(), cv::Size(5, 5));
   }
 
+  // 直方图均衡化，增加图像的对比度，使得图像的灰度值分布更加均匀
   if (mbEnableEqualizer) {
     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(5, 5));
     clahe->apply(image, image);
   }
 
-  if ((int)mlCamOrientations.size() + 1 > mnMaxTrackingLength) {
+  // 如果相机的位姿历史长度超过了最大跟踪长度，就删除最旧的位姿
+  if (mlCamOrientations.size() + 1 > mnMaxTrackingLength) {
     mlCamOrientations.pop_front();
     mlCamPositions.pop_front();
   }
@@ -144,7 +151,7 @@ void Tracker::preprocess(const int nImageId, const cv::Mat& image,
 }
 
 void Tracker::undistort(const std::vector<cv::Point2f>& src,
-                        std::vector<cv::Point2f>& dst) {
+                        std::vector<cv::Point2f>& dst) const {
   int N = src.size();
 
   cv::Mat mat(N, 2, CV_32F);
@@ -177,7 +184,7 @@ void Tracker::DisplayTrack(const int nImageId, const cv::Mat& image,
   imOut.encoding = "bgr8";
   cvtColor(image, imOut.image, CV_GRAY2BGR);
 
-  for (int i = 0; i < (int)vPrevFeatUVs.size(); ++i) {
+  for (int i = 0; i < vPrevFeatUVs.size(); ++i) {
     if (vInlierFlags.at(i)) {
       cv::circle(imOut.image, vPrevFeatUVs.at(i), 3, blue, -1);
       cv::line(imOut.image, vPrevFeatUVs.at(i), vCurrFeatUVs.at(i), blue);
@@ -206,7 +213,7 @@ void Tracker::DisplayNewer(const int nImageId, const cv::Mat& image,
               cv::FONT_HERSHEY_PLAIN, 2, green, 2);
 }
 
-void Tracker::VisualTracking(const int nImageId, const cv::Mat image,
+void Tracker::VisualTracking(const int nImageId, const cv::Mat& image,
                              int nMapPtsNeeded,
                              std::unordered_map<int, Feature*>& mFeatures) {
   std::vector<cv::Point2f> vFeatPts, vFeatPtsUN;
@@ -360,7 +367,7 @@ void Tracker::VisualTracking(const int nImageId, const cv::Mat image,
         PointsForRansac.col(nFeatCnt) << ptUN.x, ptUN.y, 1;
         PointsForRansac.col(nFeatCnt).normalize();
 
-        int id = 0;
+        int id;
 
         if (!mvFeatIDsInactive.empty()) {
           id = mvFeatIDsInactive.back();
@@ -394,11 +401,13 @@ void Tracker::VisualTracking(const int nImageId, const cv::Mat image,
   image.copyTo(mLastImage);
 }
 
+// 初始化后或者追踪失败后，重新开始视觉跟踪
 bool Tracker::start(const int nImageId, const cv::Mat& image,
                     const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
                     std::unordered_map<int, Feature*>& mFeatures) {
+  // 如果是第一帧图像，或者需要重启视觉追踪
   if (nImageId == 0 || mbRestartVT) {
-    featId = 0;
+    featId = 0; // 全局的特征点id，reset feature id
     mFeatures.clear();
   }
 
@@ -406,6 +415,7 @@ bool Tracker::start(const int nImageId, const cv::Mat& image,
   mvFeatPtsToTrack.clear();
   mmFeatTrackingHistory.clear();
 
+  // 预处理图像
   preprocess(nImageId, image, RcG, tcG);
 
   int nFeats = mpFeatureDetector->DetectWithSubPix(image, mnMaxFeatsPerImage, 1,
@@ -470,7 +480,7 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
       Feature* pFeature = mFeatures.at(id);
 
       if (!pFeature->IsInited()) {
-        int N = 0;
+        int N;
         if (type == UNUSED)
           N = 1;
         else if (type == BAD)
@@ -497,7 +507,7 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
       Feature* pFeature = mFeatures.at(id);
 
       if (type != POSE_ONLY) {
-        int N = 0;
+        int N;
         if (type == UNUSED)
           N = 1;
         else if (type == BAD)
@@ -537,12 +547,14 @@ void Tracker::manage(const int nImageId, const cv::Mat& image,
                                       mvFeatCandidates);
 }
 
+// 使用LK金字塔光流法进行特征点跟踪
 void Tracker::track(const int nImageId, const cv::Mat& image,
                     const Eigen::Matrix3f& RcG, const Eigen::Vector3f& tcG,
                     int nMapPtsNeeded,
                     std::unordered_map<int, Feature*>& mFeatures) {
+  // 如果是第一帧图像，或者需要重新开始或刷新视觉跟踪
   if (nImageId == 0 || mbRestartVT || mbRefreshVT) {
-    if (!start(nImageId, image, RcG, tcG, mFeatures)) return;
+    start(nImageId, image, RcG, tcG, mFeatures);
   } else {
     manage(nImageId, image, RcG, tcG, mFeatures);
 
